@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import Confetti from './Confetti';
 import bearCouple from '@/assets/bear-couple-transparent.gif';
+import bearSolo from '@/assets/bear-solo-transparent.gif';
 
 const noButtonTexts = [
   "No 💔",
@@ -149,8 +150,8 @@ const ValentineCard = () => {
         <div className="mb-8 flex justify-center">
           <div className="relative">
             <img 
-              src={bearCouple} 
-              alt="Cute bear couple" 
+              src={bearSolo} 
+              alt="Cute bear" 
               className="w-48 h-48 md:w-56 md:h-56 object-contain drop-shadow-lg"
             />
             <Sparkles className="absolute -top-2 -right-2 w-8 h-8 text-accent" />
