@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Heart, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import Confetti from './Confetti';
+import pandaCouple from '@/assets/panda-couple.png';
 
 const noButtonTexts = [
   "No 💔",
@@ -107,10 +108,12 @@ const ValentineCard = () => {
         <Confetti />
         
         <div className="success-card animate-bounce-in max-w-lg mx-auto z-10">
-          <div className="mb-6 flex justify-center gap-2">
-            <Heart className="w-12 h-12 text-primary fill-primary animate-pulse" />
-            <Sparkles className="w-12 h-12 text-accent" />
-            <Heart className="w-12 h-12 text-primary fill-primary animate-pulse" />
+          <div className="mb-6 flex justify-center">
+            <img 
+              src={pandaCouple} 
+              alt="Cute panda couple" 
+              className="w-32 h-32 object-contain animate-pulse"
+            />
           </div>
           
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
@@ -142,10 +145,14 @@ const ValentineCard = () => {
     <div className="relative flex flex-col items-center justify-center min-h-screen p-4 gradient-bg overflow-hidden">
       {/* Main Card */}
       <div className="relative z-10 text-center max-w-lg mx-auto">
-        {/* Heart decoration */}
+        {/* Panda couple decoration */}
         <div className="mb-8 flex justify-center">
           <div className="relative">
-            <Heart className="w-24 h-24 text-primary fill-primary animate-pulse" />
+            <img 
+              src={pandaCouple} 
+              alt="Cute panda couple" 
+              className="w-40 h-40 md:w-48 md:h-48 object-contain animate-pulse drop-shadow-lg"
+            />
             <Sparkles className="absolute -top-2 -right-2 w-8 h-8 text-accent" />
           </div>
         </div>
