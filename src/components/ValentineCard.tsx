@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
 import Confetti from './Confetti';
-import bearCouple from '@/assets/bear-couple.gif';
+import bearCouple from '@/assets/bear-couple-transparent.gif';
 
 const noButtonTexts = [
   "No 💔",
