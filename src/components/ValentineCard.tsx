@@ -16,7 +16,23 @@ const noButtonTexts = [
   "Nooo! 😢",
   "Pretty please? 🙏",
   "I'll be sad! 😿",
-  "Last chance! 💕",
+  "Just say yes! 💕",
+  "Why not? 🥲",
+  "I'm begging! 🙇",
+  "Have a heart! 💗",
+  "Be mine? 🌹",
+  "Stop running! 🏃",
+  "You can't escape! 😈",
+  "Resistance is futile! 🤖",
+  "Love wins! 💪",
+  "I won't give up! 🦸",
+  "Still here! 👋",
+  "Try again! 🔄",
+  "Nope, wrong one! ❌",
+  "The other button! 👉",
+  "Almost there! 🎯",
+  "So close! 🤏",
+  "You know you want to! 😉",
 ];
 
 const ValentineCard = () => {
@@ -52,7 +68,7 @@ const ValentineCard = () => {
     const newCount = evasionCount + 1;
     setEvasionCount(newCount);
     
-    const textIndex = Math.min(newCount, noButtonTexts.length - 1);
+    const textIndex = newCount % noButtonTexts.length;
     setNoButtonText(noButtonTexts[textIndex]);
     
     // Grow the Yes button
