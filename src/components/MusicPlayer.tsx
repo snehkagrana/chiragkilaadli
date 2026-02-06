@@ -1,3 +1,4 @@
+/// <reference path="../types/youtube.d.ts" />
 import { useState, useEffect, useCallback } from 'react';
 import { Volume2, VolumeX, Play } from 'lucide-react';
 
