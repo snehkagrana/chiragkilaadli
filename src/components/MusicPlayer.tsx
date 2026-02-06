@@ -1,86 +1,94 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 
 interface MusicPlayerProps {
   videoId?: string;
 }
 
+const PLAYER_CONTAINER_ID = 'youtube-player-container';
+
 const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const playerRef = useRef<YT.Player | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const initializedRef = useRef(false);
+  const [player, setPlayer] = useState<YT.Player | null>(null);
+
+  const initPlayer = useCallback(() => {
+    // Check if container exists
+    const container = document.getElementById(PLAYER_CONTAINER_ID);
+    if (!container) return;
+
+    // Create a new div for YouTube to replace (don't let it touch React-managed elements)
+    const playerDiv = document.createElement('div');
+    playerDiv.id = 'yt-player';
+    container.innerHTML = '';
+    container.appendChild(playerDiv);
+
+    const newPlayer = new window.YT.Player('yt-player', {
+      height: '0',
+      width: '0',
+      videoId: videoId,
+      playerVars: {
+        autoplay: 1,
+        loop: 1,
+        playlist: videoId,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        modestbranding: 1,
+        rel: 0,
+      },
+      events: {
+        onReady: (event) => {
+          setIsReady(true);
+          setPlayer(newPlayer);
+          event.target.setVolume(50);
+        },
+        onStateChange: (event) => {
+          if (event.data === window.YT.PlayerState.ENDED) {
+            event.target.playVideo();
+          }
+        },
+      },
+    });
+  }, [videoId]);
 
   useEffect(() => {
-    // Prevent double initialization
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    // Load YouTube IFrame API script if not already loaded
+    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+    }
 
-    // Load YouTube IFrame API
-    const loadAPI = () => {
-      if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
-        const tag = document.createElement('script');
-        tag.src = 'https://www.youtube.com/iframe_api';
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-      }
-    };
-
-    // Initialize player when API is ready
-    const initPlayer = () => {
-      if (containerRef.current && !playerRef.current) {
-        playerRef.current = new window.YT.Player(containerRef.current, {
-          height: '0',
-          width: '0',
-          videoId: videoId,
-          playerVars: {
-            autoplay: 1,
-            loop: 1,
-            playlist: videoId,
-            controls: 0,
-            disablekb: 1,
-            fs: 0,
-            modestbranding: 1,
-            rel: 0,
-          },
-          events: {
-            onReady: (event) => {
-              setIsReady(true);
-              event.target.setVolume(50);
-            },
-            onStateChange: (event) => {
-              // If video ends, replay it
-              if (event.data === window.YT.PlayerState.ENDED) {
-                event.target.playVideo();
-              }
-            },
-          },
-        });
-      }
-    };
-
+    // Wait for API to be ready
     if (window.YT && window.YT.Player) {
       initPlayer();
     } else {
-      loadAPI();
-      window.onYouTubeIframeAPIReady = initPlayer;
+      const previousCallback = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (previousCallback) previousCallback();
+        initPlayer();
+      };
     }
 
+    // Cleanup: destroy player but don't touch the DOM (let React handle the container)
     return () => {
-      if (playerRef.current) {
-        playerRef.current.destroy();
-        playerRef.current = null;
+      if (player) {
+        try {
+          player.destroy();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
       }
     };
-  }, [videoId]);
+  }, [initPlayer]);
 
   const toggleMute = () => {
-    if (playerRef.current && isReady) {
+    if (player && isReady) {
       if (isMuted) {
-        playerRef.current.unMute();
+        player.unMute();
       } else {
-        playerRef.current.mute();
+        player.mute();
       }
       setIsMuted(!isMuted);
     }
@@ -88,8 +96,11 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
 
   return (
     <>
-      {/* Hidden YouTube player */}
-      <div ref={containerRef} className="hidden" />
+      {/* Container for YouTube player - YouTube will manage the inner content */}
+      <div 
+        id={PLAYER_CONTAINER_ID} 
+        style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
+      />
       
       {/* Mute/Unmute button */}
       <button
