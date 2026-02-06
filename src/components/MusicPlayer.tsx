@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Play } from 'lucide-react';
 
 interface MusicPlayerProps {
   videoId?: string;
@@ -10,14 +10,13 @@ const PLAYER_CONTAINER_ID = 'youtube-player-container';
 const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [needsInteraction, setNeedsInteraction] = useState(false);
   const [player, setPlayer] = useState<YT.Player | null>(null);
 
   const initPlayer = useCallback(() => {
-    // Check if container exists
     const container = document.getElementById(PLAYER_CONTAINER_ID);
     if (!container) return;
 
-    // Create a new div for YouTube to replace (don't let it touch React-managed elements)
     const playerDiv = document.createElement('div');
     playerDiv.id = 'yt-player';
     container.innerHTML = '';
@@ -36,16 +35,33 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
         fs: 0,
         modestbranding: 1,
         rel: 0,
+        playsinline: 1, // Important for iOS
       },
       events: {
         onReady: (event) => {
           setIsReady(true);
           setPlayer(newPlayer);
           event.target.setVolume(50);
+          
+          // Try to play - if it fails, we need user interaction
+          const playPromise = event.target.playVideo();
+          
+          // Check if playback started after a short delay
+          setTimeout(() => {
+            const state = newPlayer.getPlayerState();
+            // -1 = unstarted, 2 = paused, 5 = video cued
+            if (state === -1 || state === 2 || state === 5) {
+              setNeedsInteraction(true);
+            }
+          }, 1000);
         },
         onStateChange: (event) => {
           if (event.data === window.YT.PlayerState.ENDED) {
             event.target.playVideo();
+          }
+          // If video starts playing, hide the play button
+          if (event.data === window.YT.PlayerState.PLAYING) {
+            setNeedsInteraction(false);
           }
         },
       },
@@ -53,14 +69,12 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
   }, [videoId]);
 
   useEffect(() => {
-    // Load YouTube IFrame API script if not already loaded
     if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
       document.head.appendChild(tag);
     }
 
-    // Wait for API to be ready
     if (window.YT && window.YT.Player) {
       initPlayer();
     } else {
@@ -71,7 +85,6 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
       };
     }
 
-    // Cleanup: destroy player but don't touch the DOM (let React handle the container)
     return () => {
       if (player) {
         try {
@@ -83,8 +96,21 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
     };
   }, [initPlayer]);
 
+  const startPlayback = () => {
+    if (player && isReady) {
+      player.playVideo();
+      setNeedsInteraction(false);
+    }
+  };
+
   const toggleMute = () => {
     if (player && isReady) {
+      // If needs interaction, start playback first
+      if (needsInteraction) {
+        startPlayback();
+        return;
+      }
+      
       if (isMuted) {
         player.unMute();
       } else {
@@ -96,11 +122,21 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
 
   return (
     <>
-      {/* Container for YouTube player - YouTube will manage the inner content */}
       <div 
         id={PLAYER_CONTAINER_ID} 
         style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
       />
+      
+      {/* Play button for mobile (shows when autoplay blocked) */}
+      {needsInteraction && (
+        <button
+          onClick={startPlayback}
+          className="fixed top-4 right-16 z-50 p-3 rounded-full bg-primary/80 backdrop-blur-sm border border-primary-foreground/30 text-primary-foreground hover:bg-primary transition-all duration-300 shadow-lg animate-pulse"
+          aria-label="Tap to play music"
+        >
+          <Play className="w-6 h-6" />
+        </button>
+      )}
       
       {/* Mute/Unmute button */}
       <button

@@ -8,6 +8,7 @@ declare namespace YT {
     isMuted(): boolean;
     setVolume(volume: number): void;
     getVolume(): number;
+    getPlayerState(): number;
     destroy(): void;
   }
 
@@ -29,6 +30,7 @@ declare namespace YT {
       fs?: 0 | 1;
       modestbranding?: 0 | 1;
       rel?: 0 | 1;
+      playsinline?: 0 | 1;
     };
     events?: {
       onReady?: (event: PlayerEvent) => void;
@@ -43,6 +45,7 @@ declare namespace YT {
     PAUSED: number;
     BUFFERING: number;
     CUED: number;
+    UNSTARTED: number;
   };
 }
 
