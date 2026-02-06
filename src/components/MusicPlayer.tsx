@@ -10,15 +10,22 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
   const [isReady, setIsReady] = useState(false);
   const playerRef = useRef<YT.Player | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent double initialization
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     // Load YouTube IFrame API
-    if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-    }
+    const loadAPI = () => {
+      if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      }
+    };
 
     // Initialize player when API is ready
     const initPlayer = () => {
@@ -41,7 +48,6 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
             onReady: (event) => {
               setIsReady(true);
               event.target.setVolume(50);
-              event.target.playVideo();
             },
             onStateChange: (event) => {
               // If video ends, replay it
@@ -57,6 +63,7 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
     if (window.YT && window.YT.Player) {
       initPlayer();
     } else {
+      loadAPI();
       window.onYouTubeIframeAPIReady = initPlayer;
     }
 
@@ -72,7 +79,6 @@ const MusicPlayer = ({ videoId = "GxldQ9eX2wo" }: MusicPlayerProps) => {
     if (playerRef.current && isReady) {
       if (isMuted) {
         playerRef.current.unMute();
-        playerRef.current.playVideo();
       } else {
         playerRef.current.mute();
       }
